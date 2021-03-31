@@ -1,0 +1,28 @@
+yum -y install net-snmp net-snmp-libs net-snmp-utils net-snmp-agent-libs net-snmp-perl net-snmp-devel
+
+net-snmp-cert gencert -I -t snmpd -n first.localdomain --san DNS:first.localdomain
+
+net-snmp-cert gencert -I -t manager -n manager --san email:root@nodo2.localdomain
+
+subject= /C=US/ST=CA/L=Davis/O=Net-SNMP/OU=Development/CN=manager/emailAddress=admin@net-snmp.org
+SHA1 Fingerprint=C2:B0:35:17:AD:E4:73:66:3B:F2:1F:F2:DD:27:7E:29:AF:CA:53:6A
+
+
+certs/snmpd.crt:
+subject= /C=US/ST=CA/L=Davis/O=Net-SNMP/OU=Development/CN=manager/emailAddress=admin@net-snmp.org
+SHA1 Fingerprint=84:9C:31:25:8B:80:7D:99:8B:C8:F6:61:83:22:4D:67:DE:8F:E6:74
+
+
+[snmp] localCert 84:9C:31:25:8B:80:7D:99:8B:C8:F6:61:83:22:4D:67:DE:8F:E6:74
+certSecName 20 C2:B0:35:17:AD:E4:73:66:3B:F2:1F:F2:DD:27:7E:29:AF:CA:53:6A --sn rwadmin
+rwuser -s tsm "rwadmin"
+
+
+net-snmp-cert showcerts --fingerprint
+
+snmpget -v 3 --defSecurityModel=tsm -u manager -l authPriv -T our_identity=C2:B0:35:17:AD:E4:73:66:3B:F2:1F:F2:DD:27:7E:29:AF:CA:53:6A -T their_identity=E6:43:D4:54:AB:40:22:A3:45:6C:27:D7:B0:3F:36:06:47:62:C6:BD tlstcp:nodo2:10161 sysUpTime.0
+
+snmpd dtlsudp:127.0.0.1:10161 tlstcp:127.0.0.1:10161 dtlsudp:nodo2:10161 tlstcp:nodo2:10161
+
+/etc/sysconfig/snmpd
+OPTIONS="-LS5d -p /var/run/snmpd.pid dtlsudp:127.0.0.1:10161 tlstcp:127.0.0.1:10161 dtlsudp:first:10161 tlstcp:first:10161"
